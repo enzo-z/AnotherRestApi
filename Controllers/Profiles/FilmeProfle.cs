@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using WebApiTest.Controllers.DTOs;
+using WebApiTest.Controllers.DTOs.Filme;
 using WebApiTest.Models;
 
 namespace WebApiTest.Controllers.Profiles
@@ -10,7 +10,7 @@ namespace WebApiTest.Controllers.Profiles
         {
             CreateMap<CreateFilmeDto, Filme>();
             CreateMap<Filme, ReadFilmeDto>();
-            CreateMap<Filme, UpdateFilmeDto>();
+            CreateMap<UpdateFilmeDto, Filme>();
         }
     }
 }

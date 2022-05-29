@@ -7,51 +7,48 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Text;
 using WebApiTest.Controllers.Helpers;
-using WebApiTest.Controllers.DTOs;
+using WebApiTest.Controllers.DTOs.Filme;
 
 namespace WebApiTest.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class FilmeController : Controller
+    public class FilmeController : ControllerBase
     {
-        private readonly FilmesContext _context;
+        private readonly MyAppDbContext _dbContext;
         private readonly IMapper _mapper;
 
-        public FilmeController(FilmesContext context, IMapper mapper)
+        public FilmeController(MyAppDbContext context, IMapper mapper)
         {
-            _context = context;
+            _dbContext = context;
             _mapper = mapper;
         }
-
 
         [HttpGet(Name = "GetAll")]
         public IEnumerable<ReadFilmeDto> GetAll()
         {
-            var filmes = _context.Filmes.AsParallel().Select(f => _mapper.Map<ReadFilmeDto>(f));
+            var filmes = _dbContext.Filmes.AsParallel().Select(f => _mapper.Map<ReadFilmeDto>(f));
             //var myJson = CustomJsonSerializer.ToJson(filmes);
             return filmes;
         }
 
-        
         [HttpGet(template: "{id}", Name = "GetById")]
         public IActionResult GetById(int id)
         {
-            Filme? filme = _context.Filmes.FirstOrDefault((filme) => filme.Id == id);
-            return (filme is null) ? NotFound() : Ok(filme);
+            if (!existsInDatabase(id)) return NotFound();
+
+            Filme filme = _dbContext.Filmes.First((filme) => filme.Id == id);
+            var filmeDto = _mapper.Map<ReadFilmeDto>(filme); 
+            return Ok(filmeDto);
         }
 
-        
         [HttpPost(Name = "CreateFilme")]
         public IActionResult Post([FromBody] CreateFilmeDto filmeDto)
         {
+            var filme = _mapper.Map<Filme>(filmeDto);
+            _dbContext.Filmes.Add(filme);
 
-            Filme filme = _mapper.Map<Filme>(filmeDto);
-
-            _context.Filmes.Add(filme);
-
-            int stateChanges = _context.SaveChanges();
-            if (stateChanges > 0)
+            if(changesInDatabaseOccurred(_dbContext.SaveChanges()))
             {
                 return CreatedAtAction
                     (
@@ -60,45 +57,39 @@ namespace WebApiTest.Controllers
                     value: filme
                     );
             }
-            return BadRequest(error: new { Erro = "Erro ao cadastrar filme!" });
+            return BadRequest(error: new { Erro = ErrorMessage.CreationError});
         }
-
         
         [HttpPut(template: "{id}", Name = "UpdateById")]
         public IActionResult UpdateById(int id, [FromBody] UpdateFilmeDto filmeDto)
         {
-            Filme? filme = _context.Filmes.FirstOrDefault((filme) => filme.Id == id);
+            if(!existsInDatabase(id)) return NotFound();
+            
+            Filme filme = _dbContext.Filmes.First((filme) => filme.Id == id);
+            _mapper.Map(filmeDto, filme);
 
-            if (filme is null)
-                return NotFound();
-
-            filme.Titulo = filmeDto.Titulo;
-            filme.Genero = filmeDto.Genero;
-            filme.Duracao = filmeDto.Duracao;
-            filme.Diretor = filmeDto.Diretor;
-
-            int stateChanges = _context.SaveChanges();
-            if (stateChanges > 0)
+            if (changesInDatabaseOccurred(_dbContext.SaveChanges())) 
                 return NoContent();
 
-            return BadRequest(error: new { Erro = $"Erro ao atualizar o Filme de id {id}" });
+            return BadRequest(error: new { ElementId = id, Erro = ErrorMessage.UpdateError });
         }
-
 
         [HttpDelete(template:"{id}", Name ="DeleteById")]
         public IActionResult DeleteById(int id)
         {
-            Filme? filme = _context.Filmes.FirstOrDefault(filme => filme.Id == id);
+            if (!existsInDatabase(id)) 
+                return NotFound();
 
-            if (filme is null) return NotFound();
+            var filme = _dbContext.Filmes.First(filme => filme.Id == id);
+            _dbContext.Filmes.Remove(filme);
 
-            _context.Filmes.Remove(filme);
-            int stateChanges = _context.SaveChanges();
-
-            if (stateChanges > 0)
+            if (changesInDatabaseOccurred(_dbContext.SaveChanges())) 
                 return NoContent();
 
-            return BadRequest(error: "Não foi possível executar a deleção do elemento");
+            return BadRequest(error: ErrorMessage.DeletionError); ;
         }
+
+        private bool changesInDatabaseOccurred(int changes) => (changes > 0); 
+        private bool existsInDatabase(int id) => _dbContext.Filmes.Any(filme => filme.Id == id);
     }
 }

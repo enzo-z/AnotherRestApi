@@ -1,11 +1,15 @@
 ﻿using Newtonsoft.Json;
 using System.Text;
-using WebApiTest.Controllers.DTOs;
+using WebApiTest.Controllers.DTOs.Filme;
 
 namespace WebApiTest.Controllers.Helpers
 {
     public static class CustomJsonSerializer
     {
+
+        /// <summary>
+        /// Brincando de construir um parser de JSON "manualmente", para testar performance de serialização.
+        /// </summary>
         public static string ToJson(this IEnumerable<ReadFilmeDto> readFilmeDtos)
         {
             var sb = new StringBuilder();

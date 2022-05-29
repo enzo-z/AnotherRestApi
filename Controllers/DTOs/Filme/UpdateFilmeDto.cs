@@ -1,10 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace WebApiTest.Controllers.DTOs
+namespace WebApiTest.Controllers.DTOs.Filme
 {
-    public class CreateFilmeDto
+    public class UpdateFilmeDto
     {
-        [Required(ErrorMessage = "Título no meu DTO não informado!")]
+        [Required(ErrorMessage = "Título não informado!")]
         public string Titulo { get; set; } = null!;
 
         [Required(ErrorMessage = "Diretor não informado!")]
