@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WebApiTest.Data;
+using WebApiTest.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,7 +12,7 @@ builder.Services.AddControllers();
 //Add database context
 var serverVersion = ServerVersion.AutoDetect(connString);
 
-builder.Services.AddDbContext<FilmesContext>(opt =>
+builder.Services.AddDbContext<MyAppDbContext>(opt =>
 {
         opt.UseMySql(connString, serverVersion);
 });
@@ -34,5 +35,6 @@ if (app.Environment.IsDevelopment())
 app.UseAuthorization();
 
 app.MapControllers();
+
 
 app.Run();
